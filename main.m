@@ -4,7 +4,7 @@ close all
 %% 1 - Parameters
 lamda = 1;
 W = 4*lamda;
-angle = pi/2;
+angle = pi/6;
 alpha = 1;
 
 %% 1.a
@@ -102,7 +102,7 @@ x_axis = zeros(1,test_max);
 for p=1:test_max
     W_test = W^p;
     %Create A matrix
-    A_test = create_steering_mat(lamda, W_test, angle_d, alpha);
+    A_test = create_steering_mat(lamda, 100*W_test, angle_d, alpha);
 
     N_test = size(A_test,1); 
     x_axis(1,p) = N_test;

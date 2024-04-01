@@ -23,7 +23,11 @@ while n <= N
     if l ~= 1
         error_Rank = (Rank_l-Rank_l_prev)/Rank_l;
         if error_Rank< tau_r
-            fprintf('error taget reached with Tau = %u and Tau(r) = %u \n', tau, tau_r);
+            if n == N
+                fprintf('error taget NOT reached with Tau = %u and Tau(r) = %u \n', tau, tau_r);
+            else 
+                fprintf('error taget reached with Tau = %u and Tau(r) = %u \n', tau, tau_r);
+            end
             break
         end 
     end 

@@ -69,7 +69,7 @@ disp(T2);
 disp(T3);
 
 %% 2.i.2
-angle_2 = 0;
+angle_2 = pi/2;
 A = create_steering_mat(lamda, W, angle_2, alpha);
 tau_r = [10^-1, 5*10^-2, 10^-2];
 tau = [10^-2, 10^-5, 10^-8];
