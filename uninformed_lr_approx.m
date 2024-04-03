@@ -14,7 +14,7 @@ function [U_hat, B_hat, rank_l] = uninformed_lr_approx(A, gamma, B_0, tau)
         if norm(B, "fro") <= tau * a_norm
             break;
         else
-            disp(norm(B, "fro"));
+%             disp(norm(B, "fro"));
             A = A - U(:, 1:B_0)*B;
             l = l+1;
         end
