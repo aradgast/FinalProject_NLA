@@ -25,7 +25,7 @@ grid on
 grid minor
 
 %% 1.b
-test_max = 10;
+test_max = 5;
 tao_list = [10^-2,10^-5,10^-8];
 A_mat_fill_time = zeros(1,test_max);
 A_mat_SVD_time = zeros(1,test_max);
