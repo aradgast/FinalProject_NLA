@@ -2,18 +2,17 @@ clc
 clear
 close all
 
-%% 3 - Parameters
+% 3 - Parameters
 lamda = 1;
 W = 64*lamda;
 angle = pi/2;
 alpha = 1;
 A = create_steering_mat(lamda, W, angle, alpha);
-%%
-B_0 = 5;
+%% Understanding the algorithm with different parameters
 tic;
 S = svd(A);
 svd_time = toc;
-mc_num=100;
+mc_num=99;
 
 svd_rank = zeros(1, 3);
 informed_time = zeros(2, 3);
@@ -21,7 +20,7 @@ informed_rank = zeros(2, 3);
 
 idx_r = 0;
 idx = 0;
-gamma = 100;
+gamma = 10;
 
 for tau_r = [0.1, 0.01]
     idx_r = idx_r + 1;
@@ -31,7 +30,8 @@ for tau_r = [0.1, 0.01]
         for mc=1:mc_num
             tic;
             [U_hat, B_hat, rank_l] = informed_lr_approx(A, gamma, tau, tau_r);
-            informed_time(idx_r, idx) = informed_time(idx_r, idx)+toc/mc_num;
+            end_time = toc;
+            informed_time(idx_r, idx) = informed_time(idx_r, idx)+end_time/mc_num;
             informed_rank_mc(1,mc) = rank_l;
         end
         informed_rank(idx_r, idx) = median(informed_rank_mc);
@@ -42,12 +42,11 @@ for tau_r = [0.1, 0.01]
     idx = 0;
 end
 
-%% Gamma dependent time complexity and accuracy
+%% k - Gamma dependent time complexity and accuracy
 gamma_list = (1:5:150);
 M = length(gamma_list);
 A_norm = norm(A,'fro');
 informed_time = zeros(1,M);
-informed_rank = zeros(1,M);
 relative_error = zeros(1,M);
 
 tau = 10^-5;
@@ -78,7 +77,7 @@ for g=1:length(gamma_list)
     end
 
 end
-%%
+
 figure(1)
 scatter(gamma_list,informed_time,'filled','LineWidth',2)
 hold on
@@ -92,17 +91,8 @@ hold off
 xlabel("\gamma")
 ylabel("Time [sec]")
 legend('Fast LR Approx Time Points', 'Trend Line','Straightforward SVD')
-% figure(2)
-% scatter(gamma_list,fast_rank_estimation,'filled','LineWidth',2)
-% hold on
-% scatter(gamma_list,informed_rank,'filled','LineWidth',2)
-% scatter(gamma_list,Orig_rank.*ones(1,M),'LineWidth',3)
-% title('Rank estimation as a function of \gamma')
-% xlabel("\gamma")
-% grid on
-% legend('Fast Rank Estimation algorithm', 'Fast A estimation', 'Real rank')
-% hold off
-figure(3)
+
+figure(2)
 scatter(gamma_list,relative_error,'filled','LineWidth',2)
 xlabel("\gamma")
 grid on
@@ -112,7 +102,7 @@ plot(gamma_list,relative_error,"Color",[0,0,1])
 hold off
 %% i
 clear
-close all
+
 %Parameters
 lamda = 1;
 W = 4*lamda;
@@ -159,8 +149,8 @@ for p=1:test_max
         informed_rank(p,t) = rank_l;       
     end
 end
-%%
-figure()  
+
+figure(3)  
 hold on
 marker = ['x','+','>'];
 
@@ -177,7 +167,7 @@ legend('\tau = 10^-2, Truncated SVD','\tau = 10^-2, Alg.1','\tau = 10^-5, Trunca
 grid on
 hold off
 
-figure()
+figure(4)
 hold on
 for t=1:size(tao_list,2)
     scatter(x_axis,simple_rank(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[1,0,0],'MarkerEdgeColor',[1,0,0])
