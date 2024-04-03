@@ -43,12 +43,10 @@ for tau_r = [0.1, 0.01]
 end
 
 %% Gamma dependent time complexity and accuracy
-gamma_list = (1:20:600);
+gamma_list = (1:5:150);
 M = length(gamma_list);
 A_norm = norm(A,'fro');
 informed_time = zeros(1,M);
-simple_tranc_time = zeros(1,M);
-
 informed_rank = zeros(1,M);
 relative_error = zeros(1,M);
 
@@ -56,6 +54,7 @@ tau = 10^-5;
 tau_r = 0.1;
 mc_num=100;
 
+%get classic truncated SVD algo time
 tic;
 [U,S,V] = svd(A);
 simple_rank = sum(diag(S)>tau);
@@ -79,20 +78,7 @@ for g=1:length(gamma_list)
     end
 
 end
-
-figure(3)
-scatter(gamma_list,relative_error,'filled','LineWidth',2)
-xlabel("\gamma")
-grid on
-title('3.k - Relative Error as a function of \gamma')
-hold on
-p = polyfit(gamma_list,relative_error,1);
-f = polyval(p,gamma_list);
-plot(gamma_list,f,"Color",[0,0,1])
-plot(gamma_list,relative_error,"Color",[0,0,1])
-legend('Error Values', 'Trend Line')
-hold off
-
+%%
 figure(1)
 scatter(gamma_list,informed_time,'filled','LineWidth',2)
 hold on
@@ -101,7 +87,7 @@ grid on
 p = polyfit(gamma_list,informed_time,1);
 f = polyval(p,gamma_list);
 plot(gamma_list,f,"Color",[0,0,1])
-plot(gamma_list,simple_tranc_time*ones(1,M),'LineStyle','--')
+plot(gamma_list,simple_tranc_time*ones(1,M),'LineStyle','--',"LineWidth",2)
 hold off
 xlabel("\gamma")
 ylabel("Time [sec]")
@@ -116,77 +102,95 @@ legend('Fast LR Approx Time Points', 'Trend Line','Straightforward SVD')
 % grid on
 % legend('Fast Rank Estimation algorithm', 'Fast A estimation', 'Real rank')
 % hold off
-
+figure(3)
+scatter(gamma_list,relative_error,'filled','LineWidth',2)
+xlabel("\gamma")
+grid on
+title('3.k - Relative Error as a function of \gamma')
+hold on
+plot(gamma_list,relative_error,"Color",[0,0,1])
+hold off
 %% i
-test_max = 10;
+clear
+close all
+%Parameters
+lamda = 1;
+W = 4*lamda;
+angle = pi/2;
+alpha = 1;
+
+%Initialization
+test_max = 7;
 tao_list = [10^-2,10^-5,10^-8];
-A_mat_fill_time = zeros(1,test_max);
-A_mat_SVD_time = zeros(1,test_max);
-A_mat_memory_store = zeros(1,test_max);
-rank = zeros(test_max,3);
+T = length(tao_list);
+A_truncated_SVD_time = zeros(test_max,T);
+A_informed_SVD_time = zeros(test_max,T);
+A_mat_memory_store = zeros(test_max,T);
+simple_rank = zeros(test_max,T);
+informed_rank = zeros(test_max,T);
 x_axis = zeros(1,test_max);
 
 tau_r = 0.1;
-gamma = 100;
+gamma = 46;
 mc_num=100;
 
 for p=1:test_max
     W_test = W*2^p;
+
     %create A matrix
     A_test = create_steering_mat(lamda, W_test, angle, alpha);
-
     N_test = size(A_test,1); 
     x_axis(1,p) = N_test;
     
-    %compute clasic SVD:
-
-    %Compute memory storage in bytes
-    A_mat_memory_store(1,p) = 8*2*N_test^2;
-
-    tic;
-    S_test = svd(A_test);
-    A_mat_SVD_time(1,p) = toc;
-    if p==2 || p==4
-        figure()
-        stem(1:N_test,S_test,'filled','LineWidth',1)
-        title("1.c - Singular Values of A for N = " + N_test)
-        xlabel("n")
-        ylabel("Singular Values")
-        grid on
-    end
-
     for t=1:size(tao_list,2)
-        rank(p,t) = sum(S_test>tao_list(1,t));
+        tau_test = tao_list(1,t);
+        %compute tranked svd time:
+        tic;
+        [U_tranc,S_tranc,V_tranc] = svd(A_test);
+        simple_rank(p,t) = sum(diag(S_tranc)>tau_test);
+        A_truncated = U_tranc(:,1:simple_rank)* S_tranc(1:simple_rank,1:simple_rank)* V_tranc(:,1:simple_rank)';
+        A_truncated_SVD_time(p,t) = toc;
+    
+        %compute informed svd algo time:
+        tic;
+        [U_informed, B_informed, rank_l] = informed_lr_approx(A_test, gamma, tau_test, tau_r);
+        A_informed = U_informed*B_informed;
+        A_informed_SVD_time(p,t) = toc;
+        informed_rank(p,t) = rank_l;       
     end
 end
-
-figure(5)
-scatter(x_axis,A_mat_fill_time,'filled','LineWidth',2)
+%%
+figure()  
 hold on
-scatter(x_axis,A_mat_SVD_time,'filled','LineWidth',2)
+marker = ['x','+','>'];
+
+for t=1:size(tao_list,2)
+    scatter(x_axis,A_truncated_SVD_time(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[1,0,0],'MarkerEdgeColor',[1,0,0])
+    scatter(x_axis,A_informed_SVD_time(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[0,0,1],'MarkerEdgeColor',[0,0,1])
+end
 set(gca,'xscale','log','yscale','log')
-title("1.b - Computation Time as a funtion of N")
+title("3.l - SVD Computation Time as a funtion of N")
 xlabel("N")
 ylabel('Time [sec]')
-legend('A fill', 'SVD')
+legend('\tau = 10^-2, Truncated SVD','\tau = 10^-2, Alg.1','\tau = 10^-5, Truncated SVD', ...
+    '\tau = 10^-5, Alg.1','\tau = 10^-8, Truncated SVD''\tau = 10^-8, Alg.1')
 grid on
 hold off
 
-figure(6)
-scatter(x_axis,A_mat_memory_store,'filled','LineWidth',2)
-set(gca,'xscale','log','yscale','log')
-title("1.b - Memory Storage as a funtion of N")
-xlabel("N")
-ylabel('Memory Storage [bytes]')
-grid on
+figure()
+hold on
+for t=1:size(tao_list,2)
+    scatter(x_axis,simple_rank(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[1,0,0],'MarkerEdgeColor',[1,0,0])
+    scatter(x_axis,informed_rank(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[0,0,1],'MarkerEdgeColor',[0,0,1])
+end
 
-figure(7)
-scatter(x_axis,rank,'filled','LineWidth',1)
-title('1.c - Rank as a function of N for \tau')
+title('3.l - Rank as a function of N')
 xlabel("N")
 ylabel('Rank')
 set(gca,'xscale','log','yscale','log')
 grid on
-legend('\tau = 10^-2','\tau = 10^-5','\tau = 10^-8')
+legend('\tau = 10^-2, Truncated SVD','\tau = 10^-2, Alg.1','\tau = 10^-5, Truncated SVD', ...
+    '\tau = 10^-5, Alg.1','\tau = 10^-8, Truncated SVD','\tau = 10^-8, Alg.1')
+
 
 
