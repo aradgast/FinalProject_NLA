@@ -2,8 +2,6 @@ function [t_tild_list, error_list] = find_t_and_error(A,U,S,V,t_orig,error_delta
 monte_carlo_num = 1;
 r = A * t_orig; %Nx1
 N = size(A, 1);
-% S_inv = S^(-1);
-% m
 error_list = zeros(1, length(error_delta_range));
 t_tild_list = zeros(size(r,1), length(error_delta_range));
 

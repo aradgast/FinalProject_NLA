@@ -10,15 +10,35 @@ N = W / delta;
 angle = pi / 2;
 alpha = 1;
 
+
+
 A = create_steering_mat(lamda, W, angle, alpha);
 [U,S,V] = svd(A);
 t_orig = original_transmitter_weights(lamda, W, angle, alpha);
 error_delta_range = logspace(-15, 0, 50);
-%m
+
+% solve with full SVD
 [t_tild_list, error_list] = find_t_and_error(A, U, S, V, t_orig, error_delta_range);
 
+% solve with truncated SVD
+tau_list = [10^-2, 10^-5, 10^-8];
+error_list_tau_svd = zeros(length(tau_list), length(error_delta_range));
+for tau_idx=1:length(tau_list)
+    tau = tau_list(tau_idx);
+    rank = sum(diag(S) > tau);
+    U_t = U(:, 1:rank);
+    V_t = V(:, 1:rank);
+    S_t = S(1:rank, 1:rank);
+    [t_tild_list, error_list_tmp] = find_t_and_error(A, U_t, S_t, V_t, t_orig, error_delta_range);
+    error_list_tau_svd(tau_idx, :) = error_list_tmp;
+end
+%%
 figure(1)
 scatter(error_delta_range, error_list,'filled','LineWidth',2)
+hold on
+scatter(error_delta_range, error_list_tau_svd,'filled','LineWidth',2)
+hold off
+legend("full SVD", "\tau = 10^{-2}", "\tau = 10^{-5}", "\tau = 10^{-8}")
 title("MSE as a function of \delta")
 xlabel("\delta")
 ylabel("MSE")
@@ -55,6 +75,26 @@ for t=1:size(tau_list,2)
         error_list_tau(t,:) = error_list_tau(t,:) + error_list2 / monte_carlo_num;
     end
 end
+%% PINV solution as a refernce
+monte_carlo_num = 100;
+r = A * t_orig; %Nx1
+N = size(A, 1);
+A_pinv = pinv(A);
+
+error_list_pinv = zeros(1, length(error_delta_range));
+t_tild_list = zeros(size(r,1), length(error_delta_range));
+
+for d = 1:length(error_delta_range)
+    error_delta = error_delta_range(1, d);
+    for mc=1:monte_carlo_num
+        teta = unifrnd(0, 2 * pi, N, 1);
+        r_plagued = r + error_delta * (abs(r).*exp(1i * teta));
+        t_plagued = A_pinv * r_plagued; %  N x 1
+        t_tild_list(:,d) = t_plagued;
+        error_list_pinv(1,d) = error_list_pinv(1,d) + norm(t_orig-t_plagued,2) / (length(t_orig) * monte_carlo_num);
+
+    end
+end
 %%
 figure(1)
 scatter(error_delta_range,error_list_tau,'filled','LineWidth',2)
@@ -65,13 +105,20 @@ ylabel("MSE")
 set(gca,'xscale','log','YScale','log')
 grid on
 
+marker = ['x', '+', '>']; % Use cell array for markers
 figure(2)
-scatter(error_delta_range,error_list_tau,'filled','LineWidth',2)
+scatter(error_delta_range, error_list, '.', 'filled', 'LineWidth', 2) % Access marker using curly braces
 hold on
-scatter(error_delta_range, error_list, "filled", "LineWidth",2)
-%plot(error_delta_range2,error_list_tau)
+scatter(error_delta_range, error_list_pinv, '|', 'filled', 'LineWidth', 2) % Access marker using curly braces
+hold on
+for idx = 1:size(error_list_tau, 1)
+    scatter(error_delta_range, error_list_tau(idx, :), marker(idx), 'filled', 'LineWidth', 2) % Access marker using curly braces
+    hold on
+    scatter(error_delta_range, error_list_tau_svd(idx, :), marker(idx), 'filled', 'LineWidth', 2) % Access marker using curly braces
+    hold on
+end
 hold off
-legend('\tau = 10^-2','\tau = 10^-5','\tau = 10^-8', "full SVD")
+legend("full SVD", "PINV", '\tau = 10^-2', 'TSVD: \tau = 10^-2', '\tau = 10^-5', 'TSVD: \tau = 10^-5', '\tau = 10^-8','TSVD: \tau = 10^-8')
 title("MSE as a function of \delta")
 xlabel("\delta")
 ylabel("MSE")
