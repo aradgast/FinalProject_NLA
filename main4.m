@@ -4,21 +4,21 @@ close all
 
 % Parameters
 lamda = 1;
-W = 4*lamda;
-delta = lamda/10;
-N = W/delta;
-angle = pi/2;
+W = 4 * lamda;
+delta = lamda / 10;
+N = W / delta;
+angle = pi / 2;
 alpha = 1;
 
 A = create_steering_mat(lamda, W, angle, alpha);
 [U,S,V] = svd(A);
 t_orig = original_transmitter_weights(lamda, W, angle, alpha);
-error_delta_range = logspace(-15,0,15);
+error_delta_range = logspace(-15, 0, 15);
 %m
-[t_tild_list, error_list] = find_t_and_error(A,U,S,V,t_orig,error_delta_range);
+[t_tild_list, error_list] = find_t_and_error(A, U, S, V, t_orig, error_delta_range);
 
 figure(1)
-scatter(error_delta_range,error_list,'filled','LineWidth',2)
+scatter(error_delta_range, error_list,'filled','LineWidth',2)
 set(gca,'xscale','log','YScale','log')
 grid on
 hold on
