@@ -25,7 +25,7 @@ grid on
 grid minor
 
 %% 1.b
-test_max = 10;
+test_max = 8;
 tao_list = [10^-2,10^-5,10^-8];
 A_mat_fill_time = zeros(1,test_max);
 A_mat_SVD_time = zeros(1,test_max);
@@ -61,7 +61,7 @@ for p=1:test_max
         rank(p,t) = sum(S_test>tao_list(1,t));
     end
 end
-%%
+
 figure(5)
 scatter(x_axis,A_mat_fill_time,'filled','LineWidth',2)
 hold on
@@ -95,12 +95,12 @@ legend('\tau = 10^-2','\tau = 10^-5','\tau = 10^-8')
 %% 1.d - repeating c for teta=0
 angle_d = 0;
 
-test_max = 5;
+test_max = 8;
 rank_d = zeros(test_max,3);
 x_axis = zeros(1,test_max);
 
 for p=1:test_max
-    W_test = W^p;
+    W_test = W*2^p;
     %Create A matrix
     A_test = create_steering_mat(lamda, 100*W_test, angle_d, alpha);
 

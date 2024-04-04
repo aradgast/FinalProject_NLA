@@ -5,7 +5,7 @@ function [U_LR_hat,S_LR_hat,V_LR_hat, Rank_l] = Improve_accuracy_for_LS_solve(nu
 
 if num==1 %use informed algorithm
     tau_r = tau_r_or_B_0;
-    [U_hat, B_hat, Rank_l] = informed_lr_approx(A, gamma, tau, tau_r); A_approx = U_hat*B_hat;
+    [U_hat, B_hat, Rank_l] = informed_lr_approx(A, gamma, tau, tau_r); %A_approx = U_hat*B_hat;
 
 elseif num==2 %use uninformed algorithm
     B_0 = tau_r_or_B_0;
@@ -19,6 +19,6 @@ end
 [U_B, S_B, V_B] = svd(B_hat);
 U_LR_hat = U_hat*U_B;
 S_LR_hat = S_B(1:Rank_l,1:Rank_l);
-V_LR_hat = V_B;
+V_LR_hat = V_B(1:Rank_l,:);
 
 end
