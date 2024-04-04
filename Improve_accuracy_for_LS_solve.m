@@ -19,7 +19,7 @@ end
 [U_B, S_B, V_B] = svd(B_hat);
 U_LR_hat = U_hat*U_B;
 S_LR_hat = S_B(1:Rank_l,1:Rank_l);
-V_LR_hat = V_B(1:Rank_l,:);
+V_LR_hat = V_B(:,1:Rank_l);
 
 
 end
