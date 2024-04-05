@@ -58,7 +58,10 @@ disp(num2str(condition_num_A,5))
 %% n - solve with Different Algo.1
 
 tau_list = [10^-2, 10^-5, 10^-8];
-gamma = 150;
+gamma = 30;
+error_list_algosolve_SVD = zeros(length(tau_list), length(error_delta_range));
+algo_num = 1; %1 or 2
+monte_carlo_num = 100; %change the mc number to 1 inside find_t_and_error_func
 
 algo_num = 2; %1 or 2
 monte_carlo_num = 1; %change the mc number to 1 inside find_t_and_error_func
@@ -68,7 +71,11 @@ for t=1:size(tau_list,2)
     if algo_num == 1
         tau_r_or_B_0 = 0.1; %for tau_r
     elseif algo_num == 2
+<<<<<<< Updated upstream
         tau_r_or_B_0 = 5; %for B_0
+=======
+        tau_r_or_B_0 = 100; %for B_0
+>>>>>>> Stashed changes
     else 
         disp("Wrong Algo_num values")
     end
@@ -76,7 +83,11 @@ for t=1:size(tau_list,2)
         [U_LR_hat,S_LR_hat,V_LR_hat, Rank_l] = Improve_accuracy_for_LS_solve(algo_num, A, gamma, tau, tau_r_or_B_0);
 
         [~ ,error_list_tmp] = find_t_and_error(A,U_LR_hat,S_LR_hat,V_LR_hat,t_orig, error_delta_range);
+<<<<<<< Updated upstream
         error_list_algosolve_SVD(algo_num, t,:) = error_list_algosolve_SVD(algo_num, t, :) + reshape(error_list_tmp, [], 1, length(error_list_tmp)) / monte_carlo_num;
+=======
+        error_list_algosolve_SVD(t,:) = error_list_algosolve_SVD(t,:) + error_list_tmp / monte_carlo_num;
+>>>>>>> Stashed changes
     end
 end
 %%
@@ -84,6 +95,7 @@ end
 figure(2)
 plot(error_delta_range, error_list_full_SVD,'LineWidth',2)
 hold on
+<<<<<<< Updated upstream
 plot(error_delta_range, squeeze(error_list_algosolve_SVD(algo_num, :, :)),'LineWidth',2)
 title("4.n - MSE as a function of \delta")
 if algo_num == 1
@@ -92,6 +104,11 @@ else if algo_num == 2
     subtitle("Using UILRA Alg., with B_{0} = " + num2str(tau_r_or_B_0) + " and \gamma = " + num2str(gamma))
 end
 end
+=======
+plot(error_delta_range,error_list_algosolve_SVD,'LineWidth',2)
+title("4.n - MSE as a function of \delta")
+subtitle("Using ILRA Algorithm")
+>>>>>>> Stashed changes
 xlabel("\delta")
 ylabel("MSE")
 set(gca,'xscale','log','YScale','log')
