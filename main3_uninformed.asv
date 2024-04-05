@@ -101,9 +101,9 @@ for g=1:G
     
     end
 end
-%%
+
 figure(1)
-plot(b_list,uninformed_time,'-*','LineWidth',2)
+scatter(b_list,uninformed_time,'filled','LineWidth',2)
 hold on
 plot(b_list,simple_tranc_time*ones(1,M),'LineStyle','--')
 hold off
@@ -121,13 +121,10 @@ for i = 1:numel(gamma_list)
 end
 legend(legend_str);
 set(gca,'yscale','log')
-f = gcf;
-exportgraphics(f,'3.k - Uninformed Fast LR Approx Time Complexity as a function of B_0.jpg','Resolution',150)
 
 figure(2)
-plot(b_list,relative_error,'-*','LineWidth',2)
+scatter(b_list,relative_error,'filled','LineWidth',2)
 xlabel("B_{0}")
-ylabel("E_r")
 grid on
 title('3.k - Relative Error as a function of B_{0}')
 % legend 
@@ -137,8 +134,6 @@ for i = 1:numel(gamma_list)
 end
 legend(legend_str);
 set(gca,'yscale','log')
-f = gcf;
-exportgraphics(f,'3.k - Uninformed Relative Error as a function of B_0.jpg','Resolution',150)
 
 %% i
 clear
