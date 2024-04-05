@@ -9,7 +9,7 @@ delta = lamda / 10;
 N = W / delta;
 angle = pi / 2;
 alpha = 1;
-error_list_algosolve_SVD = zeros(2, length(tau_list), length(error_delta_range));
+
 %%
 
 A = create_steering_mat(lamda, W, angle, alpha);
@@ -58,17 +58,17 @@ disp(num2str(condition_num_A,5))
 %% n - solve with Different Algo.1
 
 tau_list = [10^-2, 10^-5, 10^-8];
-gamma = 50;
+gamma = 150;
 
-algo_num = 1; %1 or 2
-monte_carlo_num = 100; %change the mc number to 1 inside find_t_and_error_func
-
+algo_num = 2; %1 or 2
+monte_carlo_num = 1; %change the mc number to 1 inside find_t_and_error_func
+error_list_algosolve_SVD = zeros(2, length(tau_list), length(error_delta_range));
 for t=1:size(tau_list,2)
     tau = tau_list(1,t);
     if algo_num == 1
         tau_r_or_B_0 = 0.1; %for tau_r
     elseif algo_num == 2
-        tau_r_or_B_0 = 3; %for B_0
+        tau_r_or_B_0 = 5; %for B_0
     else 
         disp("Wrong Algo_num values")
     end
