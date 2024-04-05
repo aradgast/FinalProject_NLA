@@ -2,7 +2,7 @@ clc
 clear
 close all
 
-%% 3 - Parameters
+% 3 - Parameters
 lamda = 1;
 W = 64*lamda;
 angle = pi/2;
@@ -13,8 +13,8 @@ B_0 = 15;
 tic;
 S = svd(A);
 svd_time = toc;
-gamma_list = [10, 50];
-tau_list = [10^-2, 10^-5, 10^-8];
+gamma_list = [10, 150];
+tau_list = [10^-1, 10^-2, 10^-5];
 svd_rank = zeros(1, 3);
 un_informed_time = zeros(length(gamma_list), length(tau_list));
 uninformed_rank = zeros(length(gamma_list), length(tau_list));
@@ -41,14 +41,32 @@ for gamma = gamma_list
     idx = 0;
 end
 
+for idx_g = 1:length(gamma_list)
+    for idx_tau = 1:length(tau_list)
+        gamma_val = gamma_list(idx_g);
+        tau_val = tau_list(idx_tau);
+        
+        % Extract results for current combination of gamma and tau
+        un_informed_time_val = un_informed_time(idx_g, idx_tau);
+        uninformed_rank_val = uninformed_rank(idx_g, idx_tau);
+        svd_rank_val = svd_rank(idx_tau);
+        
+        % Create table for current combination
+        results_table = table(gamma_val, tau_val, un_informed_time_val, uninformed_rank_val, svd_time, svd_rank_val, ...
+            'VariableNames', {'Gamma', 'Tau', 'Uninformed_Time', 'Uninformed_Rank', 'SVD_Time', 'SVD_Rank'});
+        
+        % Display the table
+        disp(results_table);
+    end
+end
 
 %% k - Gamma dependent time complexity and accuracy
-b_list = (1:15:250);
+b_list = (1:1:15);
 M = length(b_list);
-tau = 10^-5;
-gamma_list = [5,10,50];
+tau = 10^-1;
+gamma_list = [1,10,100];
 G = length(gamma_list);
-mc_num=20;
+mc_num=99;
 
 A_norm = norm(A,'fro');
 uninformed_time = zeros(G,M);
@@ -63,6 +81,7 @@ simple_tranc_time = toc;
 
 A_truncated_norm = norm(A_truncated,'fro');
 
+%get uninformed interative LR approx time and rank
 for g=1:G
     gamma_test = gamma_list(1,g);
     for idx_b=1:length(b_list)
@@ -74,42 +93,52 @@ for g=1:G
             [U_hat, B_hat, rank_l] = uninformed_lr_approx(A, gamma_test, b_test, tau);
             A_uninformed = U_hat * B_hat;
             end_uninformed_algo_time = toc;
-            uninformed_time(g, idx_b) = uninformed_time(1, idx_b) + end_uninformed_algo_time / mc_num;
+            uninformed_time(g, idx_b) = uninformed_time(g, idx_b) + end_uninformed_algo_time / mc_num;
             
             %relative error
-            relative_error(g, idx_b) = relative_error(1, idx_b) + (norm(A_truncated-A_uninformed,'fro') / A_truncated_norm) / mc_num;
+            relative_error(g, idx_b) = relative_error(g, idx_b) + (norm(A_truncated-A_uninformed,'fro') / A_truncated_norm) / mc_num;
         end
     
     end
 end
 %%
 figure(1)
-scatter(b_list,uninformed_time,'filled','LineWidth',2)
+plot(b_list,uninformed_time,'-*','LineWidth',2)
 hold on
+plot(b_list,simple_tranc_time*ones(1,M),'LineStyle','--')
+hold off
 title('3.k - Fast LR Approx Time Complexity as a function of B_{0}')
 grid on
 % p = polyfit(b_list,uninformed_time,1);
 % f = polyval(p,b_list);
 % plot(b_list,f,"Color",[0,0,1])
-plot(b_list,simple_tranc_time*ones(1,M),'LineStyle','--')
-hold off
 xlabel("B_{0}")
 ylabel("Time [sec]")
-legend('\gamma = 5','\gamma = 10','\gamma = 50','Straightforward SVD')
+% legend 
+legend_str = cell(1, numel(gamma_list));
+for i = 1:numel(gamma_list)
+    legend_str{i} = sprintf('\\gamma = %d', gamma_list(i));
+end
+legend(legend_str);
 set(gca,'yscale','log')
+f = gcf;
+exportgraphics(f,'3.k - Uninformed Fast LR Approx Time Complexity as a function of B_0.jpg','Resolution',150)
 
 figure(2)
-scatter(b_list,relative_error,'filled','LineWidth',2)
+plot(b_list,relative_error,'-*','LineWidth',2)
 xlabel("B_{0}")
+ylabel("E_r")
 grid on
 title('3.k - Relative Error as a function of B_{0}')
-hold on
-% p = polyfit(b_list,relative_error,1);
-% f = polyval(p,b_list);
-% plot(b_list,f,"Color",[0,0,1])
-%plot(b_list,relative_error,"Color",[0,0,1])
-legend('\gamma = 5','\gamma = 10','\gamma = 50')
-hold off
+% legend 
+legend_str = cell(1, numel(gamma_list));
+for i = 1:numel(gamma_list)
+    legend_str{i} = sprintf('\\gamma = %d', gamma_list(i));
+end
+legend(legend_str);
+set(gca,'yscale','log')
+f = gcf;
+exportgraphics(f,'3.k - Uninformed Relative Error as a function of B_0.jpg','Resolution',150)
 
 %% i
 clear

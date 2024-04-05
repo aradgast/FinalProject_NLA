@@ -14,17 +14,20 @@ S = svd(A);
 svd_time = toc;
 mc_num=99;
 
-svd_rank = zeros(1, 3);
-informed_time = zeros(2, 3);
-informed_rank = zeros(2, 3);
+tau_r_l = [0.1, 0.01];
+tau_l = [10^-2, 10^-5, 10^-8];
+
+svd_rank = zeros(1, length(tau_l));
+informed_time = zeros(length(tau_r_l), length(tau_l));
+informed_rank = zeros(length(tau_r_l), length(tau_l));
 
 idx_r = 0;
 idx = 0;
 gamma = 10;
 
-for tau_r = [0.1, 0.01]
+for tau_r = tau_r_l
     idx_r = idx_r + 1;
-    for tau=[10^-2, 10^-5, 10^-8]
+    for tau= tau_l
         idx = idx + 1;
         informed_rank_mc = zeros(1,mc_num);
         for mc=1:mc_num
@@ -51,7 +54,7 @@ relative_error = zeros(1,M);
 
 tau = 10^-5;
 tau_r = 0.1;
-mc_num=100;
+mc_num=99;
 
 %get classic truncated SVD algo time
 tic;
@@ -90,7 +93,9 @@ plot(gamma_list,simple_tranc_time*ones(1,M),'LineStyle','--',"LineWidth",2)
 hold off
 xlabel("\gamma")
 ylabel("Time [sec]")
-legend('Fast LR Approx Time Points', 'Trend Line','Straightforward SVD')
+legend('Fast LR Approx Time Points', 'Trend Line','Straightforward SVD', 'Location','west')
+f = gcf;
+exportgraphics(f,'3.k - Time Complexity as a function of gamma.jpg','Resolution',150)
 
 figure(2)
 scatter(gamma_list,relative_error,'filled','LineWidth',2)
@@ -100,6 +105,8 @@ title('3.k - Relative Error as a function of \gamma')
 hold on
 plot(gamma_list,relative_error,"Color",[0,0,1])
 hold off
+f = gcf;
+exportgraphics(f,'3.k - Relative Error as a function of gamma.jpg','Resolution',150)
 %% i
 clear
 
@@ -122,7 +129,7 @@ x_axis = zeros(1,test_max);
 
 tau_r = 0.1;
 gamma = 46;
-mc_num=100;
+mc_num=49;
 
 for p=1:test_max
     W_test = W*2^p;
@@ -149,29 +156,62 @@ for p=1:test_max
         informed_rank(p,t) = rank_l;       
     end
 end
-
+%%
+close all
 figure(3)  
 hold on
-marker = ['x','+','>'];
-
-for t=1:size(tao_list,2)
-    scatter(x_axis,A_truncated_SVD_time(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[1,0,0],'MarkerEdgeColor',[1,0,0])
-    scatter(x_axis,A_informed_SVD_time(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[0,0,1],'MarkerEdgeColor',[0,0,1])
+marker = ['x','+','>','x','+','>'];
+SVDfor_plot = [A_truncated_SVD_time, A_informed_SVD_time];
+for t=1:size(SVDfor_plot,2)
+    if t <4
+    scatter(x_axis,SVDfor_plot(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[1,0,0],'MarkerEdgeColor',[1,0,0])
+    else
+    scatter(x_axis,SVDfor_plot(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[0,0,1],'MarkerEdgeColor',[0,0,1])
+    end
 end
 set(gca,'xscale','log','yscale','log')
-title("3.l - SVD Computation Time as a funtion of N")
+title("3.l - Computation Time as a funtion of N")
 xlabel("N")
 ylabel('Time [sec]')
-legend('\tau = 10^-2, Truncated SVD','\tau = 10^-2, Alg.1','\tau = 10^-5, Truncated SVD', ...
-    '\tau = 10^-5, Alg.1','\tau = 10^-8, Truncated SVD''\tau = 10^-8, Alg.1')
+legend('\tau = 10^-2, Truncated SVD','\tau = 10^-5, Truncated SVD','\tau = 10^-8, Truncated SVD' ...
+    ,'\tau = 10^-2, Alg.1','\tau = 10^-5, Alg.1','\tau = 10^-8, Alg.1')
 grid on
 hold off
+f = gcf;
+exportgraphics(f,'3.l - Computation Time as a funtion of N.jpg','Resolution',150)
 
-figure(4)
+%Use this to zoom in to specific N values:
+% zoom_N = 3;
+% figure(4)  
+% hold on
+% marker = ['x','+','>','x','+','>'];
+% SVDfor_plot = [A_truncated_SVD_time, A_informed_SVD_time];
+% for t=1:size(SVDfor_plot,2)
+%     if t <4
+%     scatter(x_axis(1,zoom_N:zoom_N),SVDfor_plot(zoom_N:zoom_N,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[1,0,0],'MarkerEdgeColor',[1,0,0])
+%     else
+%     scatter(x_axis(1,zoom_N:zoom_N),SVDfor_plot(zoom_N:zoom_N,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[0,0,1],'MarkerEdgeColor',[0,0,1])
+%     end
+% end
+% hold off
+% set(gca,'xscale','log','yscale','log')
+% title("3.l - SVD Computation Time as a funtion of N")
+% xlabel("N")
+% ylabel('Time [sec]')
+% legend('\tau = 10^-2, Truncated SVD','\tau = 10^-5, Truncated SVD','\tau = 10^-8, Truncated SVD' ...
+%     ,'\tau = 10^-2, Alg.1','\tau = 10^-5, Alg.1','\tau = 10^-8, Alg.1')
+% grid on
+
+
+figure(5)
 hold on
-for t=1:size(tao_list,2)
-    scatter(x_axis,simple_rank(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[1,0,0],'MarkerEdgeColor',[1,0,0])
-    scatter(x_axis,informed_rank(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[0,0,1],'MarkerEdgeColor',[0,0,1])
+rank_for_plot = [simple_rank,informed_rank];
+for t=1:size(rank_for_plot,2)
+    if t <4
+    scatter(x_axis,rank_for_plot(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[1,0,0],'MarkerEdgeColor',[1,0,0])
+    else
+    scatter(x_axis,rank_for_plot(:,t)',marker(t),'LineWidth',1.5,'MarkerFaceColor',[0,0,1],'MarkerEdgeColor',[0,0,1])
+    end
 end
 
 title('3.l - Rank as a function of N')
@@ -179,8 +219,9 @@ xlabel("N")
 ylabel('Rank')
 set(gca,'xscale','log','yscale','log')
 grid on
-legend('\tau = 10^-2, Truncated SVD','\tau = 10^-2, Alg.1','\tau = 10^-5, Truncated SVD', ...
-    '\tau = 10^-5, Alg.1','\tau = 10^-8, Truncated SVD','\tau = 10^-8, Alg.1')
-
+legend('\tau = 10^-2, Truncated SVD','\tau = 10^-5, Truncated SVD','\tau = 10^-8, Truncated SVD' ...
+    ,'\tau = 10^-2, Alg.1','\tau = 10^-5, Alg.1','\tau = 10^-8, Alg.1')
+f = gcf;
+exportgraphics(f,'3.l - Rank as a function of N.jpg','Resolution',150)
 
 
