@@ -9,6 +9,7 @@ delta = lamda / 10;
 N = W / delta;
 angle = pi / 2;
 alpha = 1;
+error_list_algosolve_SVD = zeros(2, length(tau_list), length(error_delta_range));
 %%
 
 A = create_steering_mat(lamda, W, angle, alpha);
@@ -57,8 +58,8 @@ disp(num2str(condition_num_A,5))
 %% n - solve with Different Algo.1
 
 tau_list = [10^-2, 10^-5, 10^-8];
-gamma = 30;
-error_list_algosolve_SVD = zeros(length(tau_list), length(error_delta_range));
+gamma = 50;
+
 algo_num = 1; %1 or 2
 monte_carlo_num = 100; %change the mc number to 1 inside find_t_and_error_func
 
@@ -67,7 +68,7 @@ for t=1:size(tau_list,2)
     if algo_num == 1
         tau_r_or_B_0 = 0.1; %for tau_r
     elseif algo_num == 2
-        tau_r_or_B_0 = 100; %for B_0
+        tau_r_or_B_0 = 3; %for B_0
     else 
         disp("Wrong Algo_num values")
     end
@@ -75,7 +76,7 @@ for t=1:size(tau_list,2)
         [U_LR_hat,S_LR_hat,V_LR_hat, Rank_l] = Improve_accuracy_for_LS_solve(algo_num, A, gamma, tau, tau_r_or_B_0);
 
         [~ ,error_list_tmp] = find_t_and_error(A,U_LR_hat,S_LR_hat,V_LR_hat,t_orig, error_delta_range);
-        error_list_algosolve_SVD(t,:) = error_list_algosolve_SVD(t,:) + error_list_tmp / monte_carlo_num;
+        error_list_algosolve_SVD(algo_num, t,:) = error_list_algosolve_SVD(algo_num, t, :) + reshape(error_list_tmp, [], 1, length(error_list_tmp)) / monte_carlo_num;
     end
 end
 %%
@@ -83,9 +84,14 @@ end
 figure(2)
 plot(error_delta_range, error_list_full_SVD,'LineWidth',2)
 hold on
-plot(error_delta_range,error_list_algosolve_SVD,'LineWidth',2)
+plot(error_delta_range, squeeze(error_list_algosolve_SVD(algo_num, :, :)),'LineWidth',2)
 title("4.n - MSE as a function of \delta")
-subtitle("Using ILRA Algorithm")
+if algo_num == 1
+    subtitle("Using ILRA Alg., with \gamma = " + num2str(gamma))
+else if algo_num == 2
+    subtitle("Using UILRA Alg., with B_{0} = " + num2str(tau_r_or_B_0) + " and \gamma = " + num2str(gamma))
+end
+end
 xlabel("\delta")
 ylabel("MSE")
 set(gca,'xscale','log','YScale','log')
@@ -116,17 +122,24 @@ end
 %%
 %compare all:L fill SVD, truncted SVD, algo1 SVD, algo2 SVD
 figure(3)
-plot(error_delta_range, error_list_full_SVD,'LineWidth', 2,'Color',[0,0,0]) % Access marker using curly braces
+plot(error_delta_range, error_list_full_SVD,'LineWidth', 2,'Color',[0,0,0])
 hold on
 plot(error_delta_range, error_list_pinv, 'LineWidth', 2) % Access marker using curly braces
-SVDfor_plot = [error_list_truncated_SVD; error_list_algosolve_SVD];
-
+SVDfor_plot = [error_list_truncated_SVD; squeeze(error_list_algosolve_SVD(1, :, :)); squeeze(error_list_algosolve_SVD(2, :, :))];
+marker = {'-*', '-x', '-|'};
+idx_marker = 0;
 for idx = 1:size(SVDfor_plot, 1)
-    plot(error_delta_range, SVDfor_plot(idx, :), 'LineWidth', 2) % Access marker using curly braces
+    if mod(idx, 3) == 1
+        idx_marker = idx_marker + 1;
+    end
+    plot(error_delta_range, SVDfor_plot(idx, :), marker{idx_marker}, 'LineWidth', 2)
+
 end
 
-legend("full SVD", "PINV", '\tau = 10^-2', '\tau = 10^-5', '\tau = 10^-8','Trancated, \tau = 10^-2',  ...
-    'Trancated, \tau = 10^-5', 'Trancated, \tau = 10^-8')
+legend("full SVD", "PINV", ...
+    'Trancated, \tau = 10^-2', 'Trancated, \tau = 10^-5', 'Trancated, \tau = 10^-8', ...
+    'ILRA \tau = 10^-2', 'ILRA \tau = 10^-5', 'ILRA \tau = 10^-8', ...
+    'UILRA \tau = 10^-2', 'UILRA \tau = 10^-5', 'UILRA \tau = 10^-8')
 title("4.n - Error as a function of \delta (Comparing all)")
 
 xlabel("\delta")
