@@ -49,64 +49,79 @@ end
 gamma_list = (1:5:150);
 M = length(gamma_list);
 A_norm = norm(A,'fro');
-informed_time = zeros(1,M);
-relative_error = zeros(1,M);
 
-tau = 10^-5;
+tau_l = [10^-2, 10^-5, 10^-8];
+T = length(tau_l);
 tau_r = 0.1;
 mc_num=99;
 
-%get classic truncated SVD algo time
-tic;
-[U,S,V] = svd(A);
-simple_rank = sum(diag(S)>tau);
-A_truncated = U(:,1:simple_rank)* S(1:simple_rank,1:simple_rank)* V(:,1:simple_rank)';
-simple_tranc_time = toc;
+informed_time = zeros(T,M);
+relative_error = zeros(T,M);
+simple_tranc_time = zeros(T,1);
 
-for g=1:length(gamma_list)
-    gamma_test = gamma_list(1,g);
-    relative_error_mc = zeros(1,mc_num);
-
-    for mc=1:mc_num
-        %get algo time
-        tic;
-        [U_hat, B_hat, rank_l] = informed_lr_approx(A, gamma_test, tau, tau_r);
-        A_informed = U_hat*B_hat;
-        end_informed_algo_time = toc;
-        informed_time(1, g) = informed_time(1, g)+end_informed_algo_time/mc_num;
-        
-        %relative error
-        relative_error(1,g) = relative_error(1,g) + (norm(A_truncated-A_informed,'fro')/norm(A_truncated,'fro'))/mc_num;
+for t=1:T
+    tau = tau_l(1,t);
+    %get classic truncated SVD algo time
+    tic;
+    [U,S,V] = svd(A);
+    simple_rank = sum(diag(S)>tau);
+    A_truncated = U(:,1:simple_rank)* S(1:simple_rank,1:simple_rank)* V(:,1:simple_rank)';
+    simple_tranc_time(t,1) = toc;
+    
+    for g=1:length(gamma_list)
+        gamma_test = gamma_list(1,g);
+        relative_error_mc = zeros(1,mc_num);
+    
+        for mc=1:mc_num
+            %get algo time
+            tic;
+            [U_hat, B_hat, rank_l] = informed_lr_approx(A, gamma_test, tau, tau_r);
+            A_informed = U_hat*B_hat;
+            end_informed_algo_time = toc;
+            informed_time(t, g) = informed_time(t, g)+end_informed_algo_time/mc_num;
+            
+            %relative error
+            relative_error(t,g) = relative_error(t,g) + (norm(A_truncated-A_informed,'fro')/norm(A_truncated,'fro'))/mc_num;
+        end
     end
-
 end
-
+%%
+color = ['b',"r","y"];
+color_val = [[0 0.4470 0.7410]; [0.6350 0.0780 0.1840]; [0.9290 0.6940 0.1250]];
 figure(1)
-scatter(gamma_list,informed_time,'filled','LineWidth',2)
 hold on
 title('3.k - Time Complexity as a function of \gamma')
 grid on
-p = polyfit(gamma_list,informed_time,1);
-f = polyval(p,gamma_list);
-plot(gamma_list,f,"Color",[0,0,1])
-plot(gamma_list,simple_tranc_time*ones(1,M),'LineStyle','--',"LineWidth",2)
-hold off
+for pl=1:T
+    %algorithm time
+    scatter(gamma_list,informed_time(pl,:),color(1,pl),'filled','LineWidth',2)
+    %trend line
+    p = polyfit(gamma_list,informed_time(pl,:),1);
+    f = polyval(p,gamma_list);
+    plot(gamma_list,f,"Color",color_val(pl,:))
+    %truncated time
+    plot(gamma_list,simple_tranc_time(pl,1)*ones(1,M),"Color",color_val(pl,:),'LineStyle','--',"LineWidth",2)
+end
 xlabel("\gamma")
 ylabel("Time [sec]")
-legend('Fast LR Approx Time Points', 'Trend Line','Straightforward SVD', 'Location','west')
+set(gca,'yscale','log')
+%legend('Fast LR Approx Time Points', 'Trend Line','Straightforward SVD', 'Location','west')
+hold off
 f = gcf;
-exportgraphics(f,'3.k - Time Complexity as a function of gamma.jpg','Resolution',150)
-
+%exportgraphics(f,'3.k - Time Complexity as a function of gamma.jpg','Resolution',150)
+%%
 figure(2)
 scatter(gamma_list,relative_error,'filled','LineWidth',2)
 xlabel("\gamma")
 grid on
 title('3.k - Relative Error as a function of \gamma')
 hold on
-plot(gamma_list,relative_error,"Color",[0,0,1])
+plot(gamma_list,relative_error,"Color",[0,0,0.1])
 hold off
+legend('\tau = 10^-2','\tau = 10^-5','\tau = 10^-8','Location','best')
+set(gca,'yscale','log')
 f = gcf;
-exportgraphics(f,'3.k - Relative Error as a function of gamma.jpg','Resolution',150)
+exportgraphics(f,'3.k - Relative Error as a function of gamma with tau compare.jpg','Resolution',150)
 %% i
 clear
 
